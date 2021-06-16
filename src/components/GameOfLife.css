@@ -1,0 +1,23 @@
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.cells-row{
+    display: flex;
+    flex-flow: row;
+}
+
+.cell {
+    height: 20px;
+    width: 20px;
+}
+
+.alive{
+    background-color: green;
+}
+
+.dead{
+    background-color: black;
+}
