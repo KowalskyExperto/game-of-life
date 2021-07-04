@@ -1,102 +1,92 @@
-import { useEffect, useState } from 'react';
-import { RowCells } from './RowCells';
+import { useEffect, useState } from "react";
+import { RowCells } from "./RowCells";
+import "./GameOfLife.css";
+import {
+  createCellsRand,
+  nextGeneration,
+  tablero,
+} from "../functions/cellsGeneration";
 
-import './GameOfLife.css';
+const { v4: uuidV4 } = require("uuid");
 
-type tablero = Array<Array<number>>
 export const GameOfLife = () => {
-    const len = 50;
-    const createCellsRand = (l:number) => {
-        var cells:tablero = new Array(l)
-        for (let x = 0; x < cells.length; x++) {
-            var row:Array<number> = new Array(l);
-            for (let y = 0; y < row.length; y++) {
-                row[y] = Math.round(Math.random())
-            };
-            cells[x] = row;
-            
-        }
-        return cells;
-    }
+  const [len, setLen] = useState(50);
+  const [lapse, setLapse] = useState(100);
+  const [cells, setCells] = useState<tablero>(createCellsRand(len));
+  const generateNewCells = () => {
+    setCells(createCellsRand(len));
+  };
+  const onChangeLapse = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLapse(parseInt(event.target.value));
+  };
 
-    const [cells, setCells] = useState<tablero>(createCellsRand(len))
-    const generateNewCells = () => {
-        setCells(createCellsRand(len))
-    }
+  const [refresh, setRefresh] = useState(0);
 
-    const nextGeneration = (cells:tablero,l:number) => {
-        var newCells: tablero = new Array(l);
-        const dx:Array<number> = [0,0,1,-1,1,-1,-1,1]
-        const dy:Array<number> = [1,-1,0,0,1,-1,1,-1]
-        for (let y = 0; y < cells.length; y++) {
-            var row:Array<number> = new Array(l);
-            for (let x = 0; x < cells.length; x++) {
-                let cont = 0
-                for (let k = 0; k < dx.length; k++) {
-                    const xx:number = x + dx[k]
-                    const yy:number = y + dy[k]
-                    if( xx && yy &&
-                        0 <= xx &&
-                        xx < cells.length &&
-                        0 <= yy &&
-                        yy < cells.length
-                    ) {
-                        if(cells[yy][xx]===1){
-                            cont++;
-                        }
-                    }
-                }
-                if((cells[y][x]===1 && (cont===2 || cont===3) ) || (cont===3 && cells[y][x]===0)) {
-                    row[x] = 1
-                } else {
-                    row[x] = 0
-                }
-            }
-            newCells[y]=row;
-            
-        }
-        
-        return newCells;
-    }
-    
-    const nextFrame = () => {
-        
-    }
-    const sleep = (ms: number) => {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setCells(nextGeneration(cells,len))
-        },200);
-        return () => clearTimeout(timer);
-    }, [cells])
+  const onChangeLen = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLen(parseInt(event.target.value));
+    setRefresh(1);
+  };
 
-    const life =  () => {
-        sleep(2500)
-        console.log('Algo 1')
-        setTimeout(()=> {nextFrame()},3000)
-        sleep(2500)
-        console.log('Algo 2')
-        nextFrame()
-        sleep(2500)
-        console.log('Algo 3')
-        nextFrame()
-    }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (refresh === 0) {
+        setCells(nextGeneration(cells, len));
+      } else {
+        setCells(createCellsRand(len));
+        setRefresh(0);
+      }
+    }, lapse);
+    return () => clearTimeout(timer);
+  }, [cells, lapse, len, refresh]);
 
-    return (
-        <div>
-            <h1>The Game Of Life</h1>
-            <div className="cells">
-            {
-                cells.map((row,index) => {
-                    return <RowCells row={row} key={index}/>
-                })
-            }
-            </div>
-            <button onClick={generateNewCells}>New Cells</button>
-            <button onClick={()=>{console.table(cells)}}>Console Cells</button>
-            <button onClick={life}>Start</button>
+  return (
+    <>
+      <h1>The Game Of Life</h1>
+      <div className="row">
+        <div className="col">
+          <button onClick={generateNewCells}>New Cells</button>
+          <div>
+            <p>{lapse}</p>
+            <p>
+              25ms
+              <input
+                type="range"
+                className="slider"
+                min="25"
+                max="1000"
+                step="25"
+                value={lapse}
+                onChange={onChangeLapse}
+              />
+              1000ms
+            </p>
+          </div>
+          <div>
+            <p>
+              10
+              <input
+                type="range"
+                className="slider"
+                min="10"
+                max="75"
+                step="5"
+                value={len}
+                onChange={onChangeLen}
+              />
+              50
+            </p>
+          </div>
         </div>
-    )
-}
+        <div className="cells col centered">
+          {refresh ? (
+            <p>Cargando</p>
+          ) : (
+            cells.map((row) => {
+              return <RowCells row={row} key={uuidV4()} />;
+            })
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
